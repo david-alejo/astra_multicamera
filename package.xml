@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>multicamera</name>
+  <name>openni2_multicamera</name>
   <version>0.1.0</version>
   <description>
 
@@ -14,7 +14,7 @@
   <author>David Alejo</author>
   <maintainer email="dalejo@us.es">David Alejo</maintainer>
   <license>BSD</license>
-  <url>http://ros.org/wiki/multicamera</url>
+  <url>http://ros.org/wiki/openni2_multicamera</url>
   
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>openni2_camera</build_depend>

@@ -15,7 +15,6 @@ find_package(PkgConfig)
 set(CMAKE_CXX_FLAGS -std=c++11)
 
 catkin_package(
-  INCLUDE_DIRS include
   LIBRARIES multicamera_driver_lib
   CATKIN_DEPENDS openni2_camera camera_info_manager dynamic_reconfigure image_transport nodelet sensor_msgs roscpp message_runtime cv_bridge
   DEPENDS libopenni2

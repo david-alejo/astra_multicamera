@@ -59,22 +59,28 @@ struct device_info {
 };
 
 vector <device_info> getCamerasInfo();
-bool saveLaunchFile(const string& s, const vector <device_info> &cameras);
+bool saveLaunchFile(const string& s, const vector <device_info> &cameras, const string &input_file);
+void getDefaultParametersFromLaunchFile(const std::string &launch_file, TiXmlElement *launch_element);
 bool saveUdevRules(const string &s, const vector <device_info> &cameras);
 // Translates the URI of the device into a path: /dev/bus/usb/...
 string getUsbLocation(const string &device_uri);
 string getSerialNumber(const string &device_location);
 
 int main (int argc, char **argv) {
-  if (argc != 2) {
-    cerr << "Usage: " << argv[0] << " <launch_filename>\n";
+  if (argc != 3) {
+    cerr << "Usage: " << argv[0] << " <launch_filename> <input_filename>\n";
     return -1;
-  }
-  if (getuid()) {
-    cerr << "Warning, this app should be run by the root in order to update the udev rules\n";
   }
   
   string udev_file = "/etc/udev/rules.d/569-rgbd-multicamera.rules";
+  if (getuid()) {
+    cerr << "Warning, this app should be run by the root in order to update the udev rules\n";
+    cerr << "Writing the rules to the current directory.\n";
+    udev_file = "569-rgbd-multicamera.rules";
+  }
+  
+  const std::string window_name = "image_show";
+  cv::namedWindow(window_name, cv::WINDOW_AUTOSIZE ); // Create a window for display.
   
   vector<device_info> camera_names = getCamerasInfo(); // Save the camera names
   
@@ -87,34 +93,40 @@ int main (int argc, char **argv) {
     
     cout << "Saving files.\n";
     
-    if (saveLaunchFile(string(argv[1]), camera_names)) {
+    if (saveLaunchFile(string(argv[1]), camera_names, string(argv[2]))) {
       cout << "Launch file saved successfully.\n";
     }
-    if (!getuid() && saveUdevRules(udev_file, camera_names)) {
+    if (saveUdevRules(udev_file, camera_names)) {
       cout << "Udev rules generated successfully in: " << udev_file <<"\n";
-      cout << "Calling udevadm to reload and apply the generated rules." << endl;
-      if (!system("udevadm control --reload-rules") && !system("udevadm trigger")) {
-	cout << "New udev rules applied successfully." << endl;
+      if (!getuid()) {
+	cout << "Calling udevadm to reload and apply the generated rules." << endl;
+	if (!system("udevadm control --reload-rules") && !system("udevadm trigger")) {
+	  cout << "New udev rules applied successfully." << endl;
+	}
       }
+    } else {
+      cerr << "Could not generate the udev rules.\n";
     }
   }
+  
+  cv::destroyWindow("image_show");
   
   return 0;
 }
 
 // Uses tinyxml to generate a launch file with 
-bool saveLaunchFile(const string &s, const vector<device_info> &camera_info_vec) {
-  bool ret_val;
+bool saveLaunchFile(const string &s, const vector<device_info> &camera_info_vec, const string &input_file) {
+  bool ret_val = true;
   // Create document
   TiXmlDocument doc;
   TiXmlDeclaration decl( "1.0", "", "" );  
   doc.InsertEndChild( decl );  
   
   // Create root launch node
-  TiXmlElement *launch_element = new TiXmlElement("launch");
+  TiXmlElement launch_element("launch");
   
-  
-  
+  getDefaultParametersFromLaunchFile(input_file, &launch_element);
+
   for (int i = 0; i < camera_info_vec.size(); i++) {
     const device_info &curr_cam = camera_info_vec.at(i);
     TiXmlElement *include_elem = new TiXmlElement("include");
@@ -137,8 +149,12 @@ bool saveLaunchFile(const string &s, const vector<device_info> &camera_info_vec)
     include_elem->LinkEndChild(arg_tag);
     
     // TODO: add the arguments that we would need to change
-    launch_element->LinkEndChild(include_elem);
+    launch_element.LinkEndChild(include_elem);
   }
+  
+  doc.InsertEndChild(launch_element);
+  doc.SaveFile(s);
+  
   return ret_val;
 }
 
@@ -172,6 +188,7 @@ vector<device_info> getCamerasInfo()
       img_num = 0;
       wait = true;
       boost::shared_ptr<openni2_wrapper::OpenNI2Device> device = manager.getDevice(info.uri_);
+      
       if (device->hasColorSensor()) {
 	device->setColorFrameCallback(newColorFrameCallback);
 	device->startColorStream();
@@ -217,11 +234,18 @@ void getDefaultParametersFromLaunchFile(const std::string &launch_file, TiXmlEle
   TiXmlDocument doc(launch_file);
   TiXmlElement *root = doc.RootElement();
   
+  if (!root) {
+    cerr << "Could not get the launch file.\n";
+    return;
+  }
+  
   // Iterate over the children and copy the argument data
   TiXmlNode *it = root->FirstChild();
   while (it) {
-    if (it->ValueStr() == "arg") {
-      launch_element->InsertEndChild(*it);
+    if (it->ValueStr() == "arg" && it->ToElement()) {
+      TiXmlElement *node = new TiXmlElement("arg");
+      node->SetAttribute("name", it->ToElement()->Attribute("name"));
+      launch_element->LinkEndChild(node);
     }
     // Next getXmlCameraElement
     it = root->IterateChildren(it);
@@ -259,16 +283,17 @@ void newColorFrameCallback(sensor_msgs::ImagePtr image)
   if (img_num == 0 && wait) {
     img_num++;
     cv_bridge::CvImagePtr img_cv = cv_bridge::toCvCopy(image, "bgr8");
+    
+    cout << "Here!" << endl;
 
     ostringstream os;
     os << "Camera " << device_id;
-    cv::namedWindow(os.str(), cv::WINDOW_AUTOSIZE ); // Create a window for display.
+    
+    cv::imshow("image_show", img_cv.get()->image );                   // Show our image inside it.
+    cv::updateWindow ("image_show");
     cv::startWindowThread();
-    cv::imshow( os.str(), img_cv.get()->image );                   // Show our image inside it.
-    cv::updateWindow (os.str());
     cv::waitKey(0); // Wait for a key to be pressed in the window
     wait = false;
-    cv::destroyWindow(os.str());
   }
 }
 
