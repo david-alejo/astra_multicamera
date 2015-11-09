@@ -65,18 +65,12 @@ bool saveUdevRules(const string &s, const vector <device_info> &cameras);
 // Translates the URI of the device into a path: /dev/bus/usb/...
 string getUsbLocation(const string &device_uri);
 string getSerialNumber(const string &device_location);
+void addArgumentTags(TiXmlElement& elem_add, const TiXmlElement& elem_source);
 
 int main (int argc, char **argv) {
   if (argc != 3) {
     cerr << "Usage: " << argv[0] << " <launch_filename> <input_filename>\n";
     return -1;
-  }
-  
-  string udev_file = "/etc/udev/rules.d/569-rgbd-multicamera.rules";
-  if (getuid()) {
-    cerr << "Warning, this app should be run by the root in order to update the udev rules\n";
-    cerr << "Writing the rules to the current directory.\n";
-    udev_file = "569-rgbd-multicamera.rules";
   }
   
   const std::string window_name = "image_show";
@@ -91,21 +85,10 @@ int main (int argc, char **argv) {
       cout << camera_names.at(i).toString();
     }
     
-    cout << "Saving files.\n";
+    cout << "Saving launch file.\n";
     
     if (saveLaunchFile(string(argv[1]), camera_names, string(argv[2]))) {
       cout << "Launch file saved successfully.\n";
-    }
-    if (saveUdevRules(udev_file, camera_names)) {
-      cout << "Udev rules generated successfully in: " << udev_file <<"\n";
-      if (!getuid()) {
-	cout << "Calling udevadm to reload and apply the generated rules." << endl;
-	if (!system("udevadm control --reload-rules") && !system("udevadm trigger")) {
-	  cout << "New udev rules applied successfully." << endl;
-	}
-      }
-    } else {
-      cerr << "Could not generate the udev rules.\n";
     }
   }
   
@@ -136,10 +119,8 @@ bool saveLaunchFile(const string &s, const vector<device_info> &camera_info_vec,
     
     // Tag argument 1: device_id
     TiXmlElement *arg_tag = new TiXmlElement("arg");
-    arg_tag->SetAttribute("name", "device_uri");
-    string device_uri("/dev/");
-    device_uri.append(curr_cam.camera_name);
-    arg_tag->SetAttribute("value", device_uri);
+    arg_tag->SetAttribute("name", "device_id");
+    arg_tag->SetAttribute("value", curr_cam.serial);
     include_elem->LinkEndChild(arg_tag);
     
     // Second tag --> argument name of the camera
@@ -147,6 +128,8 @@ bool saveLaunchFile(const string &s, const vector<device_info> &camera_info_vec,
     arg_tag->SetAttribute("name", "camera");
     arg_tag->SetAttribute("value", curr_cam.camera_name);
     include_elem->LinkEndChild(arg_tag);
+    
+    addArgumentTags(*include_elem, launch_element);
     
     // TODO: add the arguments that we would need to change
     launch_element.LinkEndChild(include_elem);
@@ -217,10 +200,8 @@ vector<device_info> getCamerasInfo()
       vendor_id << std::hex << setfill('0') << setw(4) << std::hex << info.vendor_id_;
       camera_info.vendor_id = vendor_id.str();
       camera_info.location = getUsbLocation(info.uri_);
-      
-      camera_info.serial = getSerialNumber(camera_info.location);
+      camera_info.serial = manager.getSerial(info.uri_);
       ret_val.push_back(camera_info);
-      
     } catch (exception &e) {
       cerr << "Exception thrown while managing camera " << device_id << ". Content: " << e.what() << endl;
     }
@@ -232,6 +213,7 @@ vector<device_info> getCamerasInfo()
 void getDefaultParametersFromLaunchFile(const std::string &launch_file, TiXmlElement *launch_element) {
   // Load the file where the default parameters will be stored
   TiXmlDocument doc(launch_file);
+  doc.LoadFile();
   TiXmlElement *root = doc.RootElement();
   
   if (!root) {
@@ -243,40 +225,21 @@ void getDefaultParametersFromLaunchFile(const std::string &launch_file, TiXmlEle
   TiXmlNode *it = root->FirstChild();
   while (it) {
     if (it->ValueStr() == "arg" && it->ToElement()) {
-      TiXmlElement *node = new TiXmlElement("arg");
-      node->SetAttribute("name", it->ToElement()->Attribute("name"));
-      launch_element->LinkEndChild(node);
+      string name(it->ToElement()->Attribute("name"));
+      if (name != "camera" && name != "rgb_frame_id" && name != "device_id" && name != "rgb_frame_id" && name != "depth_frame_id" && name != "depth_camera_info_url" &&
+	name != "rgb_camera_info_url")
+      {
+	TiXmlElement *node = new TiXmlElement("arg");
+      
+	node->SetAttribute("name", it->ToElement()->Attribute("name"));
+	node->SetAttribute("default", it->ToElement()->Attribute("default"));
+	launch_element->LinkEndChild(node);
+      }
     }
     // Next getXmlCameraElement
     it = root->IterateChildren(it);
   }
 }
-
-bool saveUdevRules(const string& s, const vector< device_info >& cameras)
-{
-  bool ret_val = true;
-  
-  try {
-   
-    ofstream ofs;
-    ofs.open(s);
-    
-    for (unsigned int i = 0; i < cameras.size(); i++) {
-      const device_info curr_cam = cameras.at(i);
-      ofs << "SUBSYSTEM==\"usb\", ATTR{idVendor}==\"";
-      ofs << curr_cam.vendor_id << "\", ";
-      ofs << "ATTR{idProduct}==\"" << curr_cam.product_id << "\", ";
-      ofs << curr_cam.serial.substr(4, curr_cam.serial.size() - 5) << ", ";
-      ofs << "MODE=\"0666\", GROUP=\"video\", SYMLINK+=\"" << curr_cam.camera_name << "\"\n";
-    }
-    ofs.close();
-  } catch (exception &e) {
-    cerr << "Exception catched while saving udev rules. Content : " << e.what() << "\n";
-  }
-  
-  return ret_val;
-}
-
 
 void newColorFrameCallback(sensor_msgs::ImagePtr image)
 {
@@ -322,32 +285,22 @@ string getUsbLocation(const string& device_uri)
   return ret;
 }
 
-string getSerialNumber(const string& device_location)
+void addArgumentTags(TiXmlElement& elem_add, const TiXmlElement& elem_source)
 {
-  string ret_val;
-  const long BUFSIZE = 65536;
-  
-  string cmd = "udevadm info -a ";
-  cmd.append(device_location);
-  cmd.append("| grep serial");
-  char buf[BUFSIZE];
-  FILE *fp;
-
-  if ((fp = popen(cmd.c_str(), "r")) == NULL) {
-    printf("Error opening pipe!\n");
-    ret_val = "error";
+  // Iterate over the children and copy the argument data
+  const TiXmlNode *it = elem_source.FirstChild();
+  while (it) {
+    if (it->ValueStr() == "arg" && it->ToElement() && static_cast<string>(it->ToElement()->Attribute("name")) != "device_id") {
+      TiXmlElement *node = new TiXmlElement("arg");
+      
+      node->SetAttribute("name", it->ToElement()->Attribute("name"));
+      ostringstream os;
+      os << "$(arg " << it->ToElement()->Attribute("name") << ")";
+      node->SetAttribute("value", os.str());
+      elem_add.LinkEndChild(node);
+    }
+    // Next getXmlCameraElement
+    it = elem_source.IterateChildren(it);
   }
-
-  while (ret_val != "error" && fgets(buf, BUFSIZE, fp) != NULL) {
-    // Do whatever you want here...
-    ret_val.append(buf);
-  }
-
-  if(pclose(fp))  {
-    printf("Command not found or exited with error status\n");
-    ret_val = "error";
-  }
-
-  return ret_val;
 }
 
