@@ -246,8 +246,6 @@ void newColorFrameCallback(sensor_msgs::ImagePtr image)
   if (img_num == 0 && wait) {
     img_num++;
     cv_bridge::CvImagePtr img_cv = cv_bridge::toCvCopy(image, "bgr8");
-    
-    cout << "Here!" << endl;
 
     ostringstream os;
     os << "Camera " << device_id;
