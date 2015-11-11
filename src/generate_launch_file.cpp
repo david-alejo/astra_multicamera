@@ -131,7 +131,6 @@ bool saveLaunchFile(const string &s, const vector<device_info> &camera_info_vec,
     
     addArgumentTags(*include_elem, launch_element);
     
-    // TODO: add the arguments that we would need to change
     launch_element.LinkEndChild(include_elem);
   }
   
@@ -145,9 +144,6 @@ vector<device_info> getCamerasInfo()
 {
   vector<device_info> ret_val;
    
-  // Get the accepted arguments and their default values from another launch file (typically openni2_launch/launch/openni2.launch)
-  // TODO
-  
   // Get the connected OpenNI2 devices
   boost::shared_ptr<std::vector<openni2_wrapper::OpenNI2DeviceInfo> > device_infos = manager.getConnectedDeviceInfos();
   std::cout << "Found " << device_infos->size() << " devices:" << std::endl;
@@ -210,6 +206,7 @@ vector<device_info> getCamerasInfo()
   return ret_val;
 }
 
+// Get the accepted arguments and their default values from another launch file (typically openni2_launch/launch/openni2.launch)
 void getDefaultParametersFromLaunchFile(const std::string &launch_file, TiXmlElement *launch_element) {
   // Load the file where the default parameters will be stored
   TiXmlDocument doc(launch_file);
@@ -226,6 +223,7 @@ void getDefaultParametersFromLaunchFile(const std::string &launch_file, TiXmlEle
   while (it) {
     if (it->ValueStr() == "arg" && it->ToElement()) {
       string name(it->ToElement()->Attribute("name"));
+      // Discard undesired tags
       if (name != "camera" && name != "rgb_frame_id" && name != "device_id" && name != "rgb_frame_id" && name != "depth_frame_id" && name != "depth_camera_info_url" &&
 	name != "rgb_camera_info_url")
       {
@@ -233,6 +231,13 @@ void getDefaultParametersFromLaunchFile(const std::string &launch_file, TiXmlEle
       
 	node->SetAttribute("name", it->ToElement()->Attribute("name"));
 	node->SetAttribute("default", it->ToElement()->Attribute("default"));
+	
+	if (it->ToElement()->Attribute("if")) {
+	  node->SetAttribute("if", it->ToElement()->Attribute("if"));
+	} else if (it->ToElement()->Attribute("unless")) {
+	  node->SetAttribute("unless", it->ToElement()->Attribute("unless"));
+	}
+	
 	launch_element->LinkEndChild(node);
       }
     }
