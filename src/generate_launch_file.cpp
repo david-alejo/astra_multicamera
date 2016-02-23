@@ -39,6 +39,7 @@ int img_num = 0;
 bool wait = false;
 int max_wait = 10; // Maximum wait time in seconds
 string device_id; // ID of the current camera
+int data_skip = 0; // Data skip values
 
 struct device_info {
   string camera_name;
@@ -67,10 +68,16 @@ string getUsbLocation(const string &device_uri);
 string getSerialNumber(const string &device_location);
 void addArgumentTags(TiXmlElement& elem_add, const TiXmlElement& elem_source);
 
+
+
 int main (int argc, char **argv) {
-  if (argc != 3) {
-    cerr << "Usage: " << argv[0] << " <launch_filename> <input_filename>\n";
+  if (argc < 3) {
+    cerr << "Usage: " << argv[0] << " <launch_filename> <input_filename> [<data_skip>]\n";
     return -1;
+  }
+  
+  if (argc >=3) {
+    data_skip = atoi(argv[3]);
   }
   
   const std::string window_name = "image_show";
@@ -109,6 +116,10 @@ bool saveLaunchFile(const string &s, const vector<device_info> &camera_info_vec,
   TiXmlElement launch_element("launch");
   
   getDefaultParametersFromLaunchFile(input_file, &launch_element);
+  
+  TiXmlElement *arg_skip_tag = new TiXmlElement("arg");
+  arg_skip_tag->SetAttribute("name", "data_skip");
+  arg_skip_tag->SetAttribute("default", data_skip);
 
   for (int i = 0; i < camera_info_vec.size(); i++) {
     const device_info &curr_cam = camera_info_vec.at(i);
@@ -128,6 +139,13 @@ bool saveLaunchFile(const string &s, const vector<device_info> &camera_info_vec,
     arg_tag->SetAttribute("name", "camera");
     arg_tag->SetAttribute("value", curr_cam.camera_name);
     include_elem->LinkEndChild(arg_tag);
+    
+    TiXmlElement *param_tag = new TiXmlElement("param");
+    string s("/");
+    s.append(curr_cam.camera_name);
+    s.append("/driver/data_skip");
+    param_tag->SetAttribute("name", s);
+    param_tag->SetAttribute("value", "$(arg data_skip)");
     
     addArgumentTags(*include_elem, launch_element);
     
