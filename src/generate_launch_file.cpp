@@ -73,6 +73,7 @@ void addArgumentTags(TiXmlElement& elem_add, const TiXmlElement& elem_source);
 int main (int argc, char **argv) {
   if (argc < 3) {
     cerr << "Usage: " << argv[0] << " <launch_filename> <input_filename> [<data_skip>]\n";
+    cerr << "Data skip means the number of frames necessary in order to publish one. I.e. data skip = 3 will publish 1 image of each 3 received\n";
     return -1;
   }
   
