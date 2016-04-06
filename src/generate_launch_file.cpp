@@ -147,7 +147,7 @@ bool saveLaunchFile(const string &s, const vector<device_info> &camera_info_vec,
     s.append("/driver/data_skip");
     param_tag->SetAttribute("name", s);
     param_tag->SetAttribute("value", "$(arg data_skip)");
-    include_elem->LinkEndChild(param_tag);
+    launch_element.LinkEndChild(param_tag);
     
     addArgumentTags(*include_elem, launch_element);
     
