@@ -120,7 +120,7 @@ bool saveLaunchFile(const string &s, const vector<device_info> &camera_info_vec,
   TiXmlElement *arg_skip_tag = new TiXmlElement("arg");
   arg_skip_tag->SetAttribute("name", "data_skip");
   arg_skip_tag->SetAttribute("default", data_skip);
-
+  launch_element.LinkEndChild(arg_skip_tag);
   for (int i = 0; i < camera_info_vec.size(); i++) {
     const device_info &curr_cam = camera_info_vec.at(i);
     TiXmlElement *include_elem = new TiXmlElement("include");
@@ -146,6 +146,7 @@ bool saveLaunchFile(const string &s, const vector<device_info> &camera_info_vec,
     s.append("/driver/data_skip");
     param_tag->SetAttribute("name", s);
     param_tag->SetAttribute("value", "$(arg data_skip)");
+    include_elem->LinkEndChild(param_tag);
     
     addArgumentTags(*include_elem, launch_element);
     
