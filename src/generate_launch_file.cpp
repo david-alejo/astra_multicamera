@@ -313,7 +313,9 @@ void addArgumentTags(TiXmlElement& elem_add, const TiXmlElement& elem_source)
   // Iterate over the children and copy the argument data
   const TiXmlNode *it = elem_source.FirstChild();
   while (it) {
-    if (it->ValueStr() == "arg" && it->ToElement() && static_cast<string>(it->ToElement()->Attribute("name")) != "device_id") {
+    if (it->ValueStr() == "arg" && it->ToElement() && static_cast<string>(it->ToElement()->Attribute("name")) != "device_id"
+      && static_cast<string>(it->ToElement()->Attribute("name")) != "data_skip"
+    ) {
       TiXmlElement *node = new TiXmlElement("arg");
       
       node->SetAttribute("name", it->ToElement()->Attribute("name"));
