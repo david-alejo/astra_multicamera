@@ -77,7 +77,7 @@ int main (int argc, char **argv) {
     return -1;
   }
   
-  if (argc >=3) {
+  if (argc >3) {
     data_skip = atoi(argv[3]);
   }
   
