@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 <launch>
 
-<node name="tf_front" pkg="tf" type="static_transform_publisher" args="0.09 0 0 0 0 0 sandwich_center front_link  10"/>
-<node name="tf_back" pkg="tf" type="static_transform_publisher" args="-0.09 0 0 3.141593 0 0 sandwich_center back_link 10"/>
-<node name="tf_front_left" pkg="tf" type="static_transform_publisher" args="0.078 0.045 -0.07 1.047 0 0 sandwich_center front_left_link 10"/>
-<node name="tf_front_right" pkg="tf" type="static_transform_publisher" args="0.078 -0.045 -0.035 -1.047 0 0 sandwich_center front_right_link 10"/>
-<node name="tf_back_left" pkg="tf" type="static_transform_publisher" args="-0.078 0.045 -0.035 2.094 0 0 sandwich_center back_left_link 10"/>
-<node name="tf_back_right" pkg="tf" type="static_transform_publisher" args="-0.078 -0.045 -0.07 -2.094 0 0 sandwich_center back_right_link 10"/>
+<node name="tf_front" pkg="tf" type="static_transform_publisher" args="0.09 0 0 0 0 0 sandwich_center front_link  100"/>
+<node name="tf_back" pkg="tf" type="static_transform_publisher" args="-0.09 0 0 3.141593 0 0 sandwich_center back_link 100"/>
+<node name="tf_front_left" pkg="tf" type="static_transform_publisher" args="0.078 0.045 -0.07 1.047 0 0 sandwich_center front_left_link 100"/>
+<node name="tf_front_right" pkg="tf" type="static_transform_publisher" args="0.078 -0.045 -0.035 -1.047 0 0 sandwich_center front_right_link 100"/>
+<node name="tf_back_left" pkg="tf" type="static_transform_publisher" args="-0.078 0.045 -0.035 2.094 0 0 sandwich_center back_left_link 100"/>
+<node name="tf_back_right" pkg="tf" type="static_transform_publisher" args="-0.078 -0.045 -0.07 -2.094 0 0 sandwich_center back_right_link 100"/>
 
 </launch>
