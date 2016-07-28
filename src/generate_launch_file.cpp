@@ -1,6 +1,6 @@
-// This utility will act as an aid in order to identify the position of the cameras and generates two files: and automatically generate 
-// 1- A ROS launch file which can be used to start all the ROS video streams
-// 2- 
+// This utility will act as an aid in order to identify the position of the cameras and generates several files 
+// 1- A ROS launch file for each camera with the desired options
+// 2- A delayed ROS launch that sequentially calls the above generated launch files
 
 #include <string>
 #include <iostream>
@@ -34,19 +34,26 @@ openni2_wrapper::OpenNI2DeviceManager manager;
 
 void newColorFrameCallback(sensor_msgs::ImagePtr image); // Get the images from the OpenNI2 stream
 
-// Global flag stuff... the demon is inside hahahaha
+// Global stuff... the demon is inside hahahaha
 int img_num = 0;
 bool wait = false;
 int max_wait = 10; // Maximum wait time in seconds
 string device_id; // ID of the current camera
 int data_skip = 0; // Data skip values
+int delay = 2;
 
 struct device_info {
+  device_info() {
+    downsample = false;
+  }
+  
   string camera_name;
   string serial;
   string vendor_id;
   string product_id;
   string location;
+  
+  bool downsample;
   
   string toString() const {
     ostringstream os;
@@ -60,7 +67,8 @@ struct device_info {
 };
 
 vector <device_info> getCamerasInfo();
-bool saveLaunchFile(const string& s, const vector <device_info> &cameras, const string &input_file);
+bool saveDelayedLaunchFiles(const string &output_file, const vector<device_info> &camera_info_vec);
+bool saveCameraLaunchFile(const device_info &camera_info, const string &input_file);
 void getDefaultParametersFromLaunchFile(const std::string &launch_file, TiXmlElement *launch_element);
 bool saveUdevRules(const string &s, const vector <device_info> &cameras);
 // Translates the URI of the device into a path: /dev/bus/usb/...
@@ -69,11 +77,11 @@ string getSerialNumber(const string &device_location);
 void addArgumentTags(TiXmlElement& elem_add, const TiXmlElement& elem_source);
 
 
-
 int main (int argc, char **argv) {
   if (argc < 3) {
-    cerr << "Usage: " << argv[0] << " <launch_filename> <input_filename> [<data_skip>]\n";
+    cerr << "Usage: " << argv[0] << " <launch_filename> <input_filename> [<data_skip> [<delay_between_cameras>]]\n";
     cerr << "Data skip means the number of frames necessary in order to publish one. I.e. data skip = 3 will publish 1 image of each 3 received\n";
+    cerr << "Delay between cameras: each camera will be activated x seconds after the preceeding one (defaults to 2)\n";
     return -1;
   }
   
@@ -84,20 +92,26 @@ int main (int argc, char **argv) {
   const std::string window_name = "image_show";
   cv::namedWindow(window_name, cv::WINDOW_AUTOSIZE ); // Create a window for display.
   
-  vector<device_info> camera_names = getCamerasInfo(); // Save the camera names
+  vector<device_info> camera_info_vec = getCamerasInfo(); // Get the camera names and attributes
   
-  if (camera_names.size() > 0) {
-    cout << "Detected " << camera_names.size() << " cameras. Info:\n";
+  if (camera_info_vec.size() > 0) {
+    cout << "Detected " << camera_info_vec.size() << " cameras. Info:\n";
     
-    for (uint i = 0; i < camera_names.size(); i++) {
-      cout << camera_names.at(i).toString();
+    for (uint i = 0; i < camera_info_vec.size(); i++) {
+      cout << camera_info_vec.at(i).toString();
     }
     
     cout << "Saving launch file.\n";
     
-    if (saveLaunchFile(string(argv[1]), camera_names, string(argv[2]))) {
-      cout << "Launch file saved successfully.\n";
+    // Generate the separate camera files
+    for (unsigned int i = 0; i < camera_info_vec.size(); i++) {
+      if (saveCameraLaunchFile(camera_info_vec.at(i), string(argv[2]))) {
+        cout << camera_info_vec.at(i).camera_name << ".launch file saved successfully.\n";
+      }
     }
+    // Generate the main launch that will call the others
+    saveDelayedLaunchFiles(string(argv[1]), camera_info_vec);
+    cout << argv[1] << " file saved successfully.\n";
   }
   
   cv::destroyWindow("image_show");
@@ -105,8 +119,45 @@ int main (int argc, char **argv) {
   return 0;
 }
 
+bool saveDelayedLaunchFiles(const string &output_file, const vector<device_info> &camera_info_vec) {
+  bool ret_val = true;
+  // Create document
+  TiXmlDocument doc;
+  TiXmlDeclaration decl( "1.0", "", "" );  
+  doc.InsertEndChild( decl );  
+  
+  // Create root launch node
+  TiXmlElement launch_element("launch");
+  
+  int curr_delay = delay;
+  for (unsigned int i = 0; i < camera_info_vec.size(); i++, curr_delay += delay) {
+    TiXmlElement *node_elem = new TiXmlElement("node");
+    
+    // Attribute 1: pkg --> openni2_multicamera
+    node_elem->SetAttribute("pkg", "openni2_multicamera");
+    // Attribute 2: type --> timed_roslaunch.sh
+    node_elem->SetAttribute("type", "timed_roslaunch.sh");
+    // Attribute 3: args --> arguments of the script (1 --> delay, 2 --> name of the script)
+    ostringstream args_;
+    args_ << curr_delay << " openni2_multicamera ";
+    args_ << camera_info_vec.at(i).camera_name << ".launch";
+    node_elem->SetAttribute("args", args_.str());
+    // Attribute 4: name --> camera_name + delay
+    string node_name(camera_info_vec.at(i).camera_name);
+    node_name.append("_delay");
+    node_elem->SetAttribute("name", node_name);
+    
+    
+    launch_element.LinkEndChild(node_elem);
+  }
+  doc.InsertEndChild(launch_element);
+  doc.SaveFile(output_file);
+  
+  return ret_val;
+}
+
 // Uses tinyxml to generate a launch file with 
-bool saveLaunchFile(const string &s, const vector<device_info> &camera_info_vec, const string &input_file) {
+bool saveCameraLaunchFile(const device_info &camera_info, const string &input_file) {
   bool ret_val = true;
   // Create document
   TiXmlDocument doc;
@@ -122,40 +173,37 @@ bool saveLaunchFile(const string &s, const vector<device_info> &camera_info_vec,
   arg_skip_tag->SetAttribute("name", "data_skip");
   arg_skip_tag->SetAttribute("default", data_skip);
   launch_element.LinkEndChild(arg_skip_tag);
-  for (int i = 0; i < camera_info_vec.size(); i++) {
-    const device_info &curr_cam = camera_info_vec.at(i);
-    TiXmlElement *include_elem = new TiXmlElement("include");
-    
-    // File attribute: the default launch file of openni2
-    include_elem->SetAttribute("file", "$(find openni2_launch)/launch/openni2.launch");
-    
-    // Tag argument 1: device_id
-    TiXmlElement *arg_tag = new TiXmlElement("arg");
-    arg_tag->SetAttribute("name", "device_id");
-    arg_tag->SetAttribute("value", curr_cam.serial);
-    include_elem->LinkEndChild(arg_tag);
-    
-    // Second tag --> argument name of the camera
-    arg_tag = new TiXmlElement("arg");
-    arg_tag->SetAttribute("name", "camera");
-    arg_tag->SetAttribute("value", curr_cam.camera_name);
-    include_elem->LinkEndChild(arg_tag);
-    
-    TiXmlElement *param_tag = new TiXmlElement("param");
-    string s("/");
-    s.append(curr_cam.camera_name);
-    s.append("/driver/data_skip");
-    param_tag->SetAttribute("name", s);
-    param_tag->SetAttribute("value", "$(arg data_skip)");
-    launch_element.LinkEndChild(param_tag);
-    
-    addArgumentTags(*include_elem, launch_element);
-    
-    launch_element.LinkEndChild(include_elem);
-  }
+  TiXmlElement *include_elem = new TiXmlElement("include");
   
+  // File attribute: the default launch file of openni2
+  include_elem->SetAttribute("file", "$(find openni2_launch)/launch/openni2.launch");
+  
+  // Tag argument 1: device_id
+  TiXmlElement *arg_tag = new TiXmlElement("arg");
+  arg_tag->SetAttribute("name", "device_id");
+  arg_tag->SetAttribute("value", camera_info.serial);
+  include_elem->LinkEndChild(arg_tag);
+  
+  // Second tag --> argument name of the camera
+  arg_tag = new TiXmlElement("arg");
+  arg_tag->SetAttribute("name", "camera");
+  arg_tag->SetAttribute("value", camera_info.camera_name);
+  include_elem->LinkEndChild(arg_tag);
+  
+  TiXmlElement *param_tag = new TiXmlElement("param");
+  string s("/");
+  s.append(camera_info.camera_name);
+  s.append("/driver/data_skip");
+  param_tag->SetAttribute("name", s);
+  param_tag->SetAttribute("value", "$(arg data_skip)");
+  launch_element.LinkEndChild(param_tag);
+  
+  addArgumentTags(*include_elem, launch_element);
+  
+  launch_element.LinkEndChild(include_elem);
+
   doc.InsertEndChild(launch_element);
-  doc.SaveFile(s);
+  doc.SaveFile(camera_info.camera_name + ".launch");
   
   return ret_val;
 }
@@ -206,6 +254,14 @@ vector<device_info> getCamerasInfo()
       } else {
 	cout << "Please enter the label for camera " << device_id << endl;
 	getline(cin, camera_label);
+        std::string downsample;
+        cout << "Downsample it? (y/N)" << device_id << endl;
+        getline(cin, downsample);
+        if (downsample == "y") {
+          camera_info.downsample = true;
+        } else {
+          camera_info.downsample = false;
+        }
       }
       
       // Save the camera info
