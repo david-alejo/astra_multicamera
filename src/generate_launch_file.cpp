@@ -75,6 +75,8 @@ bool saveUdevRules(const string &s, const vector <device_info> &cameras);
 string getUsbLocation(const string &device_uri);
 string getSerialNumber(const string &device_location);
 void addArgumentTags(TiXmlElement& elem_add, const TiXmlElement& elem_source);
+TiXmlElement *getDriverParameter(const std::string &name, const std::string &value, const std::string &camera_name);
+
 
 
 int main (int argc, char **argv) {
@@ -190,13 +192,15 @@ bool saveCameraLaunchFile(const device_info &camera_info, const string &input_fi
   arg_tag->SetAttribute("value", camera_info.camera_name);
   include_elem->LinkEndChild(arg_tag);
   
-  TiXmlElement *param_tag = new TiXmlElement("param");
-  string s("/");
-  s.append(camera_info.camera_name);
-  s.append("/driver/data_skip");
-  param_tag->SetAttribute("name", s);
-  param_tag->SetAttribute("value", "$(arg data_skip)");
+  TiXmlElement *param_tag = getDriverParameter("data_skip", "$(arg data_skip)", camera_info.camera_name);
   launch_element.LinkEndChild(param_tag);
+  
+  if (camera_info.downsample) {
+    param_tag = getDriverParameter("color_mode", "8", camera_info.camera_name);
+    launch_element.LinkEndChild(param_tag);
+    param_tag = getDriverParameter("depth_mode", "8", camera_info.camera_name); // Downsampling to QVGA (320x200)
+    launch_element.LinkEndChild(param_tag);
+  }
   
   addArgumentTags(*include_elem, launch_element);
   
@@ -206,6 +210,17 @@ bool saveCameraLaunchFile(const device_info &camera_info, const string &input_fi
   doc.SaveFile(camera_info.camera_name + ".launch");
   
   return ret_val;
+}
+
+TiXmlElement *getDriverParameter(const std::string &name, const std::string &value, const std::string &camera_name) {
+  TiXmlElement *param_tag = new TiXmlElement("param");
+  string s("/");
+  s.append(camera_name);
+  s.append("/driver/");
+  s.append(name);
+  param_tag->SetAttribute("name", s);
+  param_tag->SetAttribute("value", value);
+  return param_tag;
 }
 
 vector<device_info> getCamerasInfo()
@@ -257,7 +272,8 @@ vector<device_info> getCamerasInfo()
         std::string downsample;
         cout << "Downsample it? (y/N)" << device_id << endl;
         getline(cin, downsample);
-        if (downsample == "y") {
+        if (downsample[0] == 'y') {
+          cout << "Downsampling\n";
           camera_info.downsample = true;
         } else {
           camera_info.downsample = false;
