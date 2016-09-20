@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.4.6)
 project(openni2_multicamera)
 include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 
-find_package(catkin REQUIRED openni2_camera camera_info_manager dynamic_reconfigure image_transport  nodelet sensor_msgs roscpp message_generation cv_bridge)
+find_package(catkin REQUIRED openni2_camera camera_info_manager dynamic_reconfigure image_transport  nodelet sensor_msgs nav_msgs roscpp message_generation cv_bridge)
 
 find_package(Boost REQUIRED COMPONENTS system thread)
 

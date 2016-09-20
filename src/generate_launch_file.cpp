@@ -37,10 +37,10 @@ void newColorFrameCallback(sensor_msgs::ImagePtr image); // Get the images from 
 // Global stuff... the demon is inside hahahaha
 int img_num = 0;
 bool wait = false;
-int max_wait = 10; // Maximum wait time in seconds
+int max_wait = 10; // Maximum wait time in seconds to get the keyboard response from the user
 string device_id; // ID of the current camera
 int data_skip = 0; // Data skip values
-int delay = 2;
+int delay = 2; // Delay between launching the drivers of two consecutive cameras
 
 struct device_info {
   device_info() {
