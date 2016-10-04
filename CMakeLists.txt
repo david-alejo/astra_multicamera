@@ -35,8 +35,8 @@ link_directories(${PC_OPENNI2_LIBRARY_DIRS})
 # add_dependencies(openni2_driver_lib ${PROJECT_NAME}_gencfg)
 
 
-add_executable(generate_config_file src/generate_config_file.cpp)
-target_link_libraries(generate_config_file ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${LIBS})
+add_executable(show_info src/show_info.cpp)
+target_link_libraries(show_info ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${LIBS})
 
 add_executable(generate_launch_file src/generate_launch_file.cpp)
 target_link_libraries(generate_launch_file ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${LIBS})

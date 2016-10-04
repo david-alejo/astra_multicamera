@@ -15,6 +15,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include "camera_info.hpp"
 
 // OpenCV stuff
 #include <opencv2/core/core.hpp>
@@ -42,42 +43,13 @@ string device_id; // ID of the current camera
 int data_skip = 0; // Data skip values
 int delay = 2; // Delay between launching the drivers of two consecutive cameras
 
-struct device_info {
-  device_info() {
-    downsample = false;
-  }
-  
-  string camera_name;
-  string serial;
-  string vendor_id;
-  string product_id;
-  string location;
-  
-  bool downsample;
-  
-  string toString() const {
-    ostringstream os;
-    os << "Camera name: " << camera_name << "\n";
-    os << "Vendor ID: " << vendor_id << "\n";
-    os << "Product ID: " << product_id<< "\n";
-    os << "Serial: " << serial << "\n";
-    os << "Location: " << location << "\n";
-    return os.str();
-  }
-};
-
-vector <device_info> getCamerasInfo();
+vector <device_info> getCamerasInfoWithLabel();
 bool saveDelayedLaunchFiles(const string &output_file, const vector<device_info> &camera_info_vec);
 bool saveCameraLaunchFile(const device_info &camera_info, const string &input_file);
 void getDefaultParametersFromLaunchFile(const std::string &launch_file, TiXmlElement *launch_element);
 bool saveUdevRules(const string &s, const vector <device_info> &cameras);
-// Translates the URI of the device into a path: /dev/bus/usb/...
-string getUsbLocation(const string &device_uri);
-string getSerialNumber(const string &device_location);
 void addArgumentTags(TiXmlElement& elem_add, const TiXmlElement& elem_source);
 TiXmlElement *getDriverParameter(const std::string &name, const std::string &value, const std::string &camera_name);
-
-
 
 int main (int argc, char **argv) {
   if (argc < 3) {
@@ -223,19 +195,18 @@ TiXmlElement *getDriverParameter(const std::string &name, const std::string &val
   return param_tag;
 }
 
-vector<device_info> getCamerasInfo()
+vector<device_info> getCamerasInfoWithLabel()
 {
-  vector<device_info> ret_val;
+  vector<device_info> ret_val = getCamerasInfo();
    
   // Get the connected OpenNI2 devices
   boost::shared_ptr<std::vector<openni2_wrapper::OpenNI2DeviceInfo> > device_infos = manager.getConnectedDeviceInfos();
-  std::cout << "Found " << device_infos->size() << " devices:" << std::endl;
   
   // Iterate over the devices, asking the user for labels and generating the proper include tag
   for (size_t i = 0; i < device_infos->size(); ++i)
   {
     openni2_wrapper::OpenNI2DeviceInfo &info = device_infos->at(i);
-    device_info camera_info;
+    device_info camera_info = ret_val.at(i);
     
     ostringstream os, os2;
     os << "camera_" << i;
@@ -280,16 +251,8 @@ vector<device_info> getCamerasInfo()
         }
       }
       
-      // Save the camera info
+      // Update the label of the camera info
       camera_info.camera_name = camera_label;
-      std::ostringstream product_id, vendor_id;
-      product_id << std::hex << setfill('0') << setw(4) << info.product_id_;
-      camera_info.product_id = product_id.str();
-      vendor_id << std::hex << setfill('0') << setw(4) << std::hex << info.vendor_id_;
-      camera_info.vendor_id = vendor_id.str();
-      camera_info.location = getUsbLocation(info.uri_);
-      camera_info.serial = manager.getSerial(info.uri_);
-      ret_val.push_back(camera_info);
     } catch (exception &e) {
       cerr << "Exception thrown while managing camera " << device_id << ". Content: " << e.what() << endl;
     }
@@ -353,31 +316,6 @@ void newColorFrameCallback(sensor_msgs::ImagePtr image)
     cv::waitKey(0); // Wait for a key to be pressed in the window
     wait = false;
   }
-}
-
-string getUsbLocation(const string& device_uri)
-{
-  string ret = "/dev/bus/usb/";
-  int i;
-  
-  string bus_device = device_uri.substr(device_uri.find('@') + 1, device_uri.size());
-  istringstream bus_is (bus_device.substr(0, bus_device.find('/')));
-  bus_is >> i;
-  ostringstream bus_id;
-  bus_id << setfill('0') << setw(3) << i;
-  
-  istringstream is (bus_device.substr(bus_device.find('/') + 1, bus_device.size()));
-  
-  is >> i;
-  ostringstream device_id;
-  device_id << setfill('0') << setw(3) << i;
-  
-  ret.append(bus_id.str());
-  ret.append("/");
-  ret.append(device_id.str());
-  
-  
-  return ret;
 }
 
 void addArgumentTags(TiXmlElement& elem_add, const TiXmlElement& elem_source)
