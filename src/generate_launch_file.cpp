@@ -66,7 +66,7 @@ int main (int argc, char **argv) {
   const std::string window_name = "image_show";
   cv::namedWindow(window_name, cv::WINDOW_AUTOSIZE ); // Create a window for display.
   
-  vector<device_info> camera_info_vec = getCamerasInfo(); // Get the camera names and attributes
+  vector<device_info> camera_info_vec = getCamerasInfoWithLabel(); // Get the camera names and attributes
   
   if (camera_info_vec.size() > 0) {
     cout << "Detected " << camera_info_vec.size() << " cameras. Info:\n";
@@ -206,7 +206,7 @@ vector<device_info> getCamerasInfoWithLabel()
   for (size_t i = 0; i < device_infos->size(); ++i)
   {
     openni2_wrapper::OpenNI2DeviceInfo &info = device_infos->at(i);
-    device_info camera_info = ret_val.at(i);
+    device_info &camera_info = ret_val.at(i);
     
     ostringstream os, os2;
     os << "camera_" << i;
