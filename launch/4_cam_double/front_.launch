@@ -9,15 +9,17 @@
     <arg name="depth" default="depth" />
     <arg name="load_driver" default="true" />
     <arg name="publish_tf" default="true" />
-    <arg name="rgb_processing" default="false" />
+    <arg name="rgb_processing" default="true" />
     <arg name="debayer_processing" default="false" />
     <arg name="ir_processing" default="false" />
-    <arg name="depth_processing" default="false" />
-    <arg name="depth_registered_processing" default="false" />
+    <arg name="depth_processing" default="true" />
+    <arg name="depth_registered_processing" default="true" />
     <arg name="disparity_processing" default="false" />
     <arg name="disparity_registered_processing" default="false" />
-    <arg name="hw_registered_processing" default="false" />
-    <arg name="sw_registered_processing" default="false" />
+    <arg name="hw_registered_processing" default="true" if="$(arg depth_registration)" />
+    <arg name="sw_registered_processing" default="false" if="$(arg depth_registration)" />
+    <arg name="hw_registered_processing" default="false" unless="$(arg depth_registration)" />
+    <arg name="sw_registered_processing" default="true" unless="$(arg depth_registration)" />
     <arg name="respawn" default="false" />
     <arg name="num_worker_threads" default="4" />
     <arg name="data_skip" default="2" />
