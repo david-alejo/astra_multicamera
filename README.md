@@ -12,3 +12,8 @@ rosrun openni2_multicamera generate_launch_file \<output_file> \<input_file> [ \
 
 rosrun openni2_multicamera show_info
 
+# Dependencies:
+
+- tinyxml
+- boost
+
