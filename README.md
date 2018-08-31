@@ -12,8 +12,12 @@ rosrun openni2_multicamera generate_launch_file \<output_file> \<input_file> [ \
 
 rosrun openni2_multicamera show_info
 
+# Install
+
+It assumes that ROS has been installed (tested with indigo and kinetic). Then, download the dependencies (should not be required, as these are also ROS dependencies) and download the code into a catkin workspace.
+
 # Dependencies:
 
 - tinyxml
-- boost
+- boost (shared_ptr)
 
