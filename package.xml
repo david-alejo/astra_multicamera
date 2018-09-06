@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>openni2_multicamera</name>
+  <name>astra_multicamera</name>
   <version>0.1.0</version>
   <description>
 
@@ -17,29 +17,19 @@
   <url>http://ros.org/wiki/openni2_multicamera</url>
   
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>openni2_camera</build_depend>
-  <build_depend>libopenni2-dev</build_depend>
-  <build_depend>camera_info_manager</build_depend>
-  <build_depend>nodelet</build_depend>
+  <build_depend>astra_camera</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>nav_msgs</build_depend>
   <build_depend>roscpp</build_depend>
-  <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>image_transport</build_depend>
-  <build_depend>message_generation</build_depend>
   <build_depend>cv_bridge</build_depend>
 
   
-  <run_depend>openni2_camera</run_depend>
-  <run_depend>libopenni2-dev</run_depend>
-  <run_depend>camera_info_manager</run_depend>
-  <run_depend>nodelet</run_depend>
-  <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>astra_camera</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>nav_msgs</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>image_transport</run_depend>
-  <run_depend>message_runtime</run_depend>
   <run_depend>cv_bridge</run_depend>
 
 </package>

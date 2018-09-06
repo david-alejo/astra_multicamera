@@ -7,11 +7,10 @@
 #include <stdio.h>
 #include <fstream>
 #include <tinyxml.h>
-#include <openni2/OpenNI.h>
-#include "openni2_camera/openni2_driver.h"
-#include "openni2_camera/openni2_device_manager.h"
-#include "openni2_camera/openni2_exception.h"
-#include <openni2_camera/openni2_device.h>
+#include "astra_camera/astra_driver.h"
+#include "astra_camera/astra_device_manager.h"
+#include "astra_camera/astra_exception.h"
+#include <astra_camera/astra_device.h>
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -27,13 +26,13 @@
 #include <boost/concept_check.hpp>
 
 using namespace std;
-using openni2_wrapper::OpenNI2DeviceManager;
-using openni2_wrapper::OpenNI2DeviceInfo;
-using openni2_wrapper::OpenNI2Exception;
+using astra_wrapper::AstraDeviceManager;
+using astra_wrapper::AstraDeviceInfo;
+using astra_wrapper::AstraException;
 
-openni2_wrapper::OpenNI2DeviceManager manager;
+astra_wrapper::AstraDeviceManager manager;
 
-void newColorFrameCallback(sensor_msgs::ImagePtr image); // Get the images from the OpenNI2 stream
+void newColorFrameCallback(sensor_msgs::ImagePtr image); // Get the images from the Astra stream
 
 // Global stuff... the demon is inside hahahaha
 int img_num = 0;
@@ -107,13 +106,13 @@ bool saveDelayedLaunchFiles(const string &output_file, const vector<device_info>
   for (unsigned int i = 0; i < camera_info_vec.size(); i++, curr_delay += delay) {
     TiXmlElement *node_elem = new TiXmlElement("node");
     
-    // Attribute 1: pkg --> openni2_multicamera
-    node_elem->SetAttribute("pkg", "openni2_multicamera");
+    // Attribute 1: pkg --> astra_multicamera
+    node_elem->SetAttribute("pkg", "astra_multicamera");
     // Attribute 2: type --> timed_roslaunch.sh
     node_elem->SetAttribute("type", "timed_roslaunch.sh");
     // Attribute 3: args --> arguments of the script (1 --> delay, 2 --> name of the script)
     ostringstream args_;
-    args_ << curr_delay << " openni2_multicamera ";
+    args_ << curr_delay << " astra_multicamera ";
     args_ << camera_info_vec.at(i).camera_name << ".launch";
     node_elem->SetAttribute("args", args_.str());
     // Attribute 4: name --> camera_name + delay
@@ -149,8 +148,8 @@ bool saveCameraLaunchFile(const device_info &camera_info, const string &input_fi
   launch_element.LinkEndChild(arg_skip_tag);
   TiXmlElement *include_elem = new TiXmlElement("include");
   
-  // File attribute: the default launch file of openni2
-  include_elem->SetAttribute("file", "$(find openni2_launch)/launch/openni2.launch");
+  // File attribute: the default launch file of astra
+  include_elem->SetAttribute("file", "$(find astra_launch)/launch/astra.launch");
   
   // Tag argument 1: device_id
   TiXmlElement *arg_tag = new TiXmlElement("arg");
@@ -199,13 +198,13 @@ vector<device_info> getCamerasInfoWithLabel()
 {
   vector<device_info> ret_val = getCamerasInfo();
    
-  // Get the connected OpenNI2 devices
-  boost::shared_ptr<std::vector<openni2_wrapper::OpenNI2DeviceInfo> > device_infos = manager.getConnectedDeviceInfos();
+  // Get the connected Astra devices
+  boost::shared_ptr<std::vector<astra_wrapper::AstraDeviceInfo> > device_infos = manager.getConnectedDeviceInfos();
   
   // Iterate over the devices, asking the user for labels and generating the proper include tag
   for (size_t i = 0; i < device_infos->size(); ++i)
   {
-    openni2_wrapper::OpenNI2DeviceInfo &info = device_infos->at(i);
+    astra_wrapper::AstraDeviceInfo &info = device_infos->at(i);
     device_info &camera_info = ret_val.at(i);
     
     ostringstream os, os2;
@@ -220,7 +219,7 @@ vector<device_info> getCamerasInfoWithLabel()
     try {
       img_num = 0;
       wait = true;
-      boost::shared_ptr<openni2_wrapper::OpenNI2Device> device = manager.getDevice(info.uri_);
+      boost::shared_ptr<astra_wrapper::AstraDevice> device = manager.getDevice(info.uri_);
       
       if (device->hasColorSensor()) {
 	device->setColorFrameCallback(newColorFrameCallback);
@@ -261,7 +260,7 @@ vector<device_info> getCamerasInfoWithLabel()
   return ret_val;
 }
 
-// Get the accepted arguments and their default values from another launch file (typically openni2_launch/launch/openni2.launch)
+// Get the accepted arguments and their default values from another launch file (typically astra_launch/launch/astra.launch)
 void getDefaultParametersFromLaunchFile(const std::string &launch_file, TiXmlElement *launch_element) {
   // Load the file where the default parameters will be stored
   TiXmlDocument doc(launch_file);
