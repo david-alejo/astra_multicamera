@@ -13,7 +13,7 @@ set(LIBS ${LIBS} ${OpenCV_LIBRARIES} tinyxml)
 find_package(PkgConfig)
 
 set(CMAKE_CXX_FLAGS -std=c++11)
-# set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 catkin_package(
   LIBRARIES multicamera_driver_lib
