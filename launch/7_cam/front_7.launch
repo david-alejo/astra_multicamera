@@ -22,7 +22,7 @@
     <arg name="sw_registered_processing" default="true" unless="$(arg depth_registration)" />
     <arg name="respawn" default="false" />
     <arg name="num_worker_threads" default="4" />
-    <arg name="data_skip" default="0" />
+    <arg name="data_skip" default="2" />
     <param name="/front/driver/data_skip" value="$(arg data_skip)" />
     <include file="$(find astra_launch)/launch/astra.launch">
         <arg name="device_id" value="17122831255" /> <!--New camera-->

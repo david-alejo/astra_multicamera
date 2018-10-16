@@ -22,7 +22,7 @@
     <arg name="sw_registered_processing" default="true" unless="$(arg depth_registration)" />
     <arg name="respawn" default="false" />
     <arg name="num_worker_threads" default="4" />
-    <arg name="data_skip" default="1" />
+    <arg name="data_skip" default="2" />
     <param name="/front_right/driver/data_skip" value="$(arg data_skip)" />
     <param name="/front_right/driver/color_mode" value="8" />
     <param name="/front_right/driver/depth_mode" value="8" />
