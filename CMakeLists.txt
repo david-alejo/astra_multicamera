@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.4.6)
-project(openni2_multicamera)
+project(astra_multicamera)
 include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 
-find_package(catkin REQUIRED openni2_camera camera_info_manager dynamic_reconfigure image_transport  nodelet sensor_msgs nav_msgs roscpp message_generation cv_bridge)
+find_package(catkin REQUIRED astra_camera image_transport  sensor_msgs nav_msgs roscpp cv_bridge)
 
 find_package(Boost REQUIRED COMPONENTS system thread)
 
@@ -13,12 +13,11 @@ set(LIBS ${LIBS} ${OpenCV_LIBRARIES} tinyxml)
 find_package(PkgConfig)
 
 set(CMAKE_CXX_FLAGS -std=c++11)
-# set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 catkin_package(
   LIBRARIES multicamera_driver_lib
-  CATKIN_DEPENDS openni2_camera camera_info_manager dynamic_reconfigure image_transport nodelet sensor_msgs roscpp message_runtime cv_bridge
-  DEPENDS libopenni2
+  CATKIN_DEPENDS astra_camera  image_transport sensor_msgs nav_msgs roscpp  cv_bridge
 )
 
 include_directories(include 

@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<launch>
+  
+  <arg name="data_skip" default="2"/>
+  
+    
+    <node pkg="openni2_multicamera" type="timed_roslaunch.sh" args="2 openni2_multicamera front_down_2.launch data_skip:=$(arg data_skip)" name="front_down_2_delay" />
+    <node pkg="openni2_multicamera" type="timed_roslaunch.sh" args="4 openni2_multicamera front_down.launch data_skip:=$(arg data_skip)" name="front_down_delay" />
+    <node pkg="openni2_multicamera" type="timed_roslaunch.sh" args="8 openni2_multicamera front_.launch data_skip:=$(arg data_skip)" name="front_delay" />
+    <node pkg="openni2_multicamera" type="timed_roslaunch.sh" args="10 openni2_multicamera back_.launch data_skip:=$(arg data_skip)" name="back_delay"/>
+    <node pkg="openni2_multicamera" type="timed_roslaunch.sh" args="6 openni2_multicamera up_inside.launch data_skip:=$(arg data_skip)" name="up_delay" />
+    
+    
+</launch>

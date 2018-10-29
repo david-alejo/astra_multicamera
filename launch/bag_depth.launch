@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-  <arg name="camera" default="camera" />
-  <!-- TODO: This is temporary: saves images, control commands and odometry-->
- <node pkg="rosbag" type="record" name="rosbag_camera" args="record -o /home/chur/depth_camera 
-        /$(arg camera)/depth/camera_info /$(arg camera)/depth/image_raw
-        " />   
-  
-</launch>

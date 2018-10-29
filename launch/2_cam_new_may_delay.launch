@@ -1,9 +1,0 @@
-<?xml version="1.0" ?>
-<launch>
-  <node pkg="openni2_multicamera" type="timed_roslaunch.sh" 
-    args="2 openni2_multicamera new_cam_front.launch" 
-    name="front_delay" output="screen"/>
-  <node pkg="openni2_multicamera" type="timed_roslaunch.sh" 
-    args="4 openni2_multicamera new_cam_back.launch" 
-    name="back_delay" output="screen"/>
-</launch>

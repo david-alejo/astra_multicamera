@@ -12,8 +12,8 @@
     <arg name="rgb_processing" default="true" />
     <arg name="debayer_processing" default="false" />
     <arg name="ir_processing" default="false" />
-    <arg name="depth_processing" default="false" />
-    <arg name="depth_registered_processing" default="false" />
+    <arg name="depth_processing" default="true" />
+    <arg name="depth_registered_processing" default="true" />
     <arg name="disparity_processing" default="false" />
     <arg name="disparity_registered_processing" default="false" />
     <arg name="hw_registered_processing" default="true" if="$(arg depth_registration)" />
@@ -23,16 +23,12 @@
     <arg name="respawn" default="false" />
     <arg name="num_worker_threads" default="4" />
     <arg name="data_skip" default="2" />
-    <param name="/front/driver/data_skip" value="$(arg data_skip)" />
-<<<<<<< HEAD
+    <param name="/up/driver/data_skip" value="$(arg data_skip)" />
+    <param name="/up/driver/color_mode" value="8" />
+    <param name="/up/driver/depth_mode" value="8" />
     <include file="$(find openni2_launch)/launch/openni2.launch">
-        <arg name="device_id" value="17122831255" />
-=======
-    <include file="$(find astra_launch)/launch/astra.launch">
-        <arg name="device_id" value="17122831255" /> <!--New camera-->
-      <!--<arg name="device_id" value="17010810082" /> --><!-- Old camera-->
->>>>>>> cd2a8839cb0ce9a5cdc4f775e61af59dfba0f254
-        <arg name="camera" value="front" />
+        <arg name="device_id" value="17030710472" />
+        <arg name="camera" value="up" />
         <arg name="depth_registration" value="$(arg depth_registration)" />
         <arg name="color_depth_synchronization" value="$(arg color_depth_synchronization)" />
         <arg name="auto_exposure" value="$(arg auto_exposure)" />
@@ -49,6 +45,8 @@
         <arg name="depth_registered_processing" value="$(arg depth_registered_processing)" />
         <arg name="disparity_processing" value="$(arg disparity_processing)" />
         <arg name="disparity_registered_processing" value="$(arg disparity_registered_processing)" />
+        <arg name="hw_registered_processing" value="$(arg hw_registered_processing)" />
+        <arg name="sw_registered_processing" value="$(arg sw_registered_processing)" />
         <arg name="hw_registered_processing" value="$(arg hw_registered_processing)" />
         <arg name="sw_registered_processing" value="$(arg sw_registered_processing)" />
         <arg name="respawn" value="$(arg respawn)" />

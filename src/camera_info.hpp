@@ -2,11 +2,10 @@
 #define CAMERA_INFO_MULTICAMERA__
 
 #include <iostream>
-#include <openni2/OpenNI.h>
-#include "openni2_camera/openni2_driver.h"
-#include "openni2_camera/openni2_device_manager.h"
-#include "openni2_camera/openni2_exception.h"
-#include <openni2_camera/openni2_device.h>
+#include "astra_camera/astra_driver.h"
+#include "astra_camera/astra_device_manager.h"
+#include "astra_camera/astra_exception.h"
+#include <astra_camera/astra_device.h>
 #include <vector>
 #include <iomanip>
 #include <sstream>
@@ -62,17 +61,17 @@ std::string getUsbLocation(const std::string& device_uri)
 // Translates the URI of the device into a path: /dev/bus/usb/...
 std::vector <device_info> getCamerasInfo() {
   std::vector<device_info> ret_val;
-  openni2_wrapper::OpenNI2DeviceManager manager;
+  astra_wrapper::AstraDeviceManager manager;
   std::string device_id;
    
-  // Get the connected OpenNI2 devices
-  boost::shared_ptr<std::vector<openni2_wrapper::OpenNI2DeviceInfo> > device_infos = manager.getConnectedDeviceInfos();
+  // Get the connected Astra devices
+  boost::shared_ptr<std::vector<astra_wrapper::AstraDeviceInfo> > device_infos = manager.getConnectedDeviceInfos();
   
   // Iterate over the devices, asking the user for labels and generating the proper include tag
   for (size_t i = 0; i < device_infos->size(); ++i)
   {
     try {
-      openni2_wrapper::OpenNI2DeviceInfo &info = device_infos->at(i);
+      astra_wrapper::AstraDeviceInfo &info = device_infos->at(i);
       device_info camera_info;
       
       std::ostringstream os, os2;

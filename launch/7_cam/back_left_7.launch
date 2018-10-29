@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <launch>
-    <arg name="depth_registration" default="false" />
+    <arg name="depth_registration" default="true" />
     <arg name="color_depth_synchronization" default="false" />
     <arg name="auto_exposure" default="true" />
     <arg name="auto_white_balance" default="true" />
@@ -26,7 +26,11 @@
     <param name="/back_left/driver/data_skip" value="$(arg data_skip)" />
     <param name="/back_left/driver/color_mode" value="8" />
     <param name="/back_left/driver/depth_mode" value="8" />
+<<<<<<< HEAD
     <include file="$(find openni2_launch)/launch/openni2.launch">
+=======
+    <include file="$(find astra_launch)/launch/astra.launch">
+>>>>>>> cd2a8839cb0ce9a5cdc4f775e61af59dfba0f254
         <arg name="device_id" value="17122830006" />
         <arg name="camera" value="back_left" />
         <arg name="depth_registration" value="$(arg depth_registration)" />
